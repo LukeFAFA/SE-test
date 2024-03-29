@@ -1,14 +1,12 @@
+
 import subprocess
 
 def is_interesting(command, subset):
-    try:
-        cmd = command.split() + [str(s) for s in subset]
-        result = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        result.communicate()
-        return result.returncode == 1
-    except Exception as e:
-        print "Error running command: {0}".format(e)
-        return False
+    cmd = command.split() + [str(s) for s in subset]
+    result = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    result.communicate()
+    return result.returncode == 1
+
 
 def delta_debug(command, current_set):
     if len(current_set) == 1:
