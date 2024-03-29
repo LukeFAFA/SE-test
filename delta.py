@@ -1,40 +1,47 @@
-
 import subprocess
+import sys
 
 def is_interesting(command, subset):
-    cmd = command.split() + [str(s) for s in subset]
-    result = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    result.communicate()
-    return result.returncode == 1
+    try:
+        # 运行命令并传入子集作为参数
+        result = subprocess.Popen(
+            command.split() + list(map(str, subset)), 
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.PIPE
+        )
+        result.communicate()  # 等待命令执行完成
+        # 如果返回值为1，则子集“有趣”
+        return result.returncode == 1
+    except subprocess.CalledProcessError as e:
+        print("Error running command: {}".format(e), file=sys.stderr)
+        return False
 
+def DD(command, P, C):
+    n = len(C)
+    if n == 1:
+        return C
+    mid = n // 2
+    P1 = C[:mid]
+    P2 = C[mid:]
+    if is_interesting(command, P + P1):
+        return DD(command, P, P1)
+    elif is_interesting(command, P + P2):
+        return DD(command, P, P2)
+    else:
+        return DD(command, P + P2, P1) + DD(command, P + P1, P2)
 
-def delta_debug(command, current_set):
-    if len(current_set) == 1:
-        return current_set
-
-    # Divide the set into two subsets
-    mid = len(current_set) // 2
-    set1 = current_set[:mid]
-    set2 = current_set[mid:]
-
-    # Test each subset to see if it is interesting
-    if is_interesting(command, set1 + current_set):
-        return delta_debug(command, set1)
-    if is_interesting(command, set2 + current_set):
-        return delta_debug(command, set2)
-
-    # If neither subset is interesting on its own, return the combination
-    return delta_debug(command, set1) + delta_debug(command, set2)
+def main(n, command):
+    # 创建一个从0到n-1的列表
+    full_set = list(range(n))
+    # 调用DD函数，并对结果排序，去除重复项
+    minimal_interesting_subset = sorted(set(DD(command, [], full_set)))
+    print(minimal_interesting_subset)
 
 if __name__ == "__main__":
-    import sys
     if len(sys.argv) != 3:
-        print "Usage: python delta.py <size_n> <command>"
+        print("Usage: {} <size_n> <command>".format(sys.argv[0]))
         sys.exit(1)
     
-    n = int(sys.argv[1])
-    command = sys.argv[2]
-    
-    full_set = range(n)
-    minimal_interesting_subset = delta_debug(command, full_set)
-    print minimal_interesting_subset
+    size_n = int(sys.argv[1])
+    command_to_run = sys.argv[2]
+    main(size_n, command_to_run)
